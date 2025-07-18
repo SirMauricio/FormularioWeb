@@ -1,5 +1,7 @@
 const db = require("../database");
-const fetch = require("node-fetch");
+
+// ✅ Corrección: Usar fetch compatible con CommonJS
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 exports.crearFormulario = async (req, res) => {
   const {
@@ -18,6 +20,8 @@ exports.crearFormulario = async (req, res) => {
 
   try {
     const secretKey = process.env.RECAPTCHA_SECRET;
+
+    // ✅ Verifica con Google reCAPTCHA
     const captchaResponse = await fetch("https://www.google.com/recaptcha/api/siteverify", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -25,6 +29,10 @@ exports.crearFormulario = async (req, res) => {
     });
 
     const captchaData = await captchaResponse.json();
+
+    console.log("Token recibido:", captchaToken);
+    console.log("Secret Key usada:", secretKey);
+    console.log("Respuesta de Google:", captchaData);
 
     if (!captchaData.success) {
       return res.status(403).json({ message: "Captcha inválido." });
@@ -49,7 +57,7 @@ exports.crearFormulario = async (req, res) => {
 };
 
 exports.obtenerFormularios = (req, res) => {
-  const sql = "SELECT * FROM formulario ORDER BY id DESC";
+  const sql = "SELECT * FROM formulario ORDER BY forId DESC"; // ✅ Corrección aquí también
   db.query(sql, (err, resultados) => {
     if (err) {
       console.error("Error al obtener formularios:", err);
