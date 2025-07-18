@@ -1,6 +1,8 @@
-import { useState } from 'react';
+// Formulario.jsx
+import { useState, useContext } from 'react';
 import axios from 'axios';
 import ReCAPTCHA from 'react-google-recaptcha';
+import { FormularioContext } from './FormularioContext';
 
 const Formulario = () => {
   const [formulario, setFormulario] = useState({
@@ -13,7 +15,9 @@ const Formulario = () => {
   });
 
   const [mensajeRespuesta, setMensajeRespuesta] = useState('');
-  const [captchaToken, setCaptchaToken] = useState(null); // Guarda el token del captcha
+  const [captchaToken, setCaptchaToken] = useState(null);
+
+  const { cargarFormularios } = useContext(FormularioContext);
 
   const handleChange = (e) => {
     setFormulario({
@@ -38,7 +42,7 @@ const Formulario = () => {
     try {
       const res = await axios.post('http://localhost:5000/formulario', {
         ...formulario,
-        captchaToken, // Asegúrate de enviar esto
+        captchaToken,
       });
 
       setMensajeRespuesta(res.data);
@@ -51,6 +55,7 @@ const Formulario = () => {
         mensaje: ''
       });
       setCaptchaToken(null);
+      cargarFormularios();
     } catch (error) {
       console.error(error);
       setMensajeRespuesta(error.response?.data?.message || 'Error al enviar el formulario');
@@ -86,15 +91,12 @@ const Formulario = () => {
           <label>Mensaje:</label>
           <textarea name="mensaje" value={formulario.mensaje} onChange={handleChange} required />
         </div>
-
-        {/* CAPTCHA */}
         <div style={{ marginTop: '10px', marginBottom: '10px' }}>
           <ReCAPTCHA
-            sitekey="TU_SITE_KEY_PUBLICA" // tu clave pública desde Google
+            sitekey="6Lc674crAAAAAPa0Xhaay-FciA45KCmv0rm0kl2C"
             onChange={handleCaptchaChange}
           />
         </div>
-
         <button type="submit">Enviar</button>
       </form>
     </div>

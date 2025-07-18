@@ -12,26 +12,24 @@ exports.crearFormulario = async (req, res) => {
     captchaToken
   } = req.body;
 
-  // Verifica si viene el token
   if (!captchaToken) {
     return res.status(400).json({ message: "Captcha no enviado" });
   }
 
   try {
-    // Valida el captcha con Google
-const secretKey = process.env.RECAPTCHA_SECRET;
-const captchaResponse = await fetch(`https://www.google.com/recaptcha/api/siteverify`, {
-  method: "POST",
-  headers: { "Content-Type": "application/x-www-form-urlencoded" },
-  body: `secret=${secretKey}&response=${captchaToken}`
-});
-const captchaData = await captchaResponse.json();
+    const secretKey = process.env.RECAPTCHA_SECRET;
+    const captchaResponse = await fetch("https://www.google.com/recaptcha/api/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `secret=${secretKey}&response=${captchaToken}`
+    });
 
-if (!captchaData.success) {
-  return res.status(403).json({ message: "Captcha inválido. Inténtalo de nuevo." });
-}
+    const captchaData = await captchaResponse.json();
 
-    // Si el captcha es válido, guardar en la BD
+    if (!captchaData.success) {
+      return res.status(403).json({ message: "Captcha inválido." });
+    }
+
     const sql = `
       INSERT INTO formulario (nombre, apellidoPaterno, apellidoMaterno, celContacto, correo, mensaje)
       VALUES (?, ?, ?, ?, ?, ?)
@@ -39,25 +37,24 @@ if (!captchaData.success) {
 
     db.query(sql, [nombre, apellidoPaterno, apellidoMaterno, celContacto, correo, mensaje], (err, result) => {
       if (err) {
-        console.error("Error al insertar datos:", err);
-        return res.status(500).send("Error al guardar el formulario");
+        console.error("Error al insertar:", err);
+        return res.status(500).send("Error al guardar en base de datos");
       }
       res.status(200).send("Formulario guardado correctamente");
     });
-
   } catch (error) {
-    console.error("Error al validar captcha:", error);
+    console.error("Error al verificar captcha:", error);
     res.status(500).json({ message: "Error al verificar captcha" });
   }
 };
 
 exports.obtenerFormularios = (req, res) => {
-  const sql = "SELECT * FROM formulario";
-  db.query(sql, (err, results) => {
+  const sql = "SELECT * FROM formulario ORDER BY id DESC";
+  db.query(sql, (err, resultados) => {
     if (err) {
       console.error("Error al obtener formularios:", err);
-      return res.status(500).send("Error al obtener datos");
+      return res.status(500).send("Error al obtener formularios");
     }
-    res.json(results);
+    res.status(200).json(resultados);
   });
 };
